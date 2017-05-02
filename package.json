@@ -1,6 +1,6 @@
 {
   "name": "insights-node-auth",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Auth module for insights-api",
   "main": "index.js",
   "scripts": {
