@@ -1,10 +1,10 @@
 /*global module*/
 
 const pub = {
-    account_number: '12345',
-    org_id: '54321',
+    accountNumber: '12345',
+    orgId: '54321',
     locale: 'en_US',
-    sso_username: 'bob-loblaws-law-blog',
+    ssoUsername: 'bob-loblaws-law-blog',
     email: 'bobloblaw@example.com',
     firstName: 'Bob',
     lastName: 'Lowlaw',
@@ -14,9 +14,9 @@ const pub = {
     address: {
         street: 'Bob Lane',
         county: 'ORANGE',
-        country_code: 'US',
-        po_box: false,
-        postal_code: '92663',
+        countryCode: 'US',
+        poBox: false,
+        postalCode: '92663',
         state: 'CA',
         city: 'NEWPORT BEACH'
     }
@@ -32,12 +32,12 @@ module.exports.smwBasicUserObject = {
         { group: 'redhat:employees', roles: [ 'USER' ] }
     ],
     id: 5299389,
-    login: pub.sso_username,
-    loginUppercase: pub.sso_username.toUpperCase(),
+    login: pub.ssoUsername,
+    loginUppercase: pub.ssoUsername.toUpperCase(),
     password: null,
     active: true,
     oracleContactId: null,
-    orgId: pub.org_id,
+    orgId: pub.orgId,
     contactPermissions: {
         allowEmailContact: false,
         allowFaxContact: false,
@@ -67,7 +67,7 @@ module.exports.smwBasicUserObject = {
         password: null,
         creditApplicationCompleted: false,
         customerType: 'B',
-        oracleCustomerNumber: pub.account_number,
+        oracleCustomerNumber: pub.accountNumber,
         namedAccount: false,
         createdDate: 1031342012000,
         updatedDate: 1485798648944
@@ -115,37 +115,37 @@ module.exports.keycloakJwtUserObject = {
         ]
     },
     resource_access: {},
-    REDHAT_LOGIN: pub.sso_username,
+    REDHAT_LOGIN: pub.ssoUsername,
     lastName: pub.lastName,
-    country: pub.address.country_code,
-    account_number: pub.account_number,
-    employeeId: pub.sso_username,
+    country: pub.address.countryCode,
+    account_number: pub.accountNumber,
+    employeeId: pub.ssoUsername,
     firstName: pub.firstName,
-    account_id: pub.org_id,
+    account_id: pub.orgId,
     user_id: '59fdsf',
     organization_id: '0fsdfsdsdf000116C',
     siteId: 'redhat',
     siteID: 'redhat',
     portal_id: '0fdsfsd',
     lang: pub.locale,
-    region: pub.address.country_code,
-    RHAT_LOGIN: pub.sso_username,
+    region: pub.address.countryCode,
+    RHAT_LOGIN: pub.ssoUsername,
     email: pub.email,
-    username: pub.sso_username,
+    username: pub.ssoUsername,
     DONT_CACHE: true
 };
 
 module.exports.strataUserObject = {
     created_date: 1233334484000,
     last_modified_date: 1485798525623,
-    account_number: pub.account_number,
+    account_number: pub.accountNumber,
     is_active: true,
     company: pub.company,
     phone_number: pub.phoneNumber,
     id: '98765',
     first_name: pub.firstName,
     last_name: pub.lastName,
-    org_id: pub.org_id,
+    org_id: pub.orgId,
     email: pub.email,
     last_logged_in_date: 1484697600000,
     preferred_language: pub.locale,
@@ -184,9 +184,9 @@ module.exports.strataUserObject = {
     address: {
         address1: pub.address.street,
         county: pub.address.county,
-        country_code: pub.address.country_code,
-        po_box: pub.address.po_box,
-        postal_code: pub.address.postal_code,
+        country_code: pub.address.countryCode,
+        po_box: pub.address.poBox,
+        postal_code: pub.address.postalCode,
         state: pub.address.state,
         city: pub.address.city
     },
@@ -194,5 +194,5 @@ module.exports.strataUserObject = {
     can_access_all_accounts: true,
     is_secure_support_tech: false,
     ever_entitled: true,
-    sso_username: pub.sso_username
+    sso_username: pub.ssoUsername
 };

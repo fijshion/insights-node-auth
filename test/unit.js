@@ -9,13 +9,13 @@ const auth    = require('../index');
 const funcs   = {};
 
 funcs.validateUser = (user) => {
-    user.should.have.property('account_number', samples.pub.account_number);
-    user.should.have.property('org_id', samples.pub.org_id);
+    user.should.have.property('account_number', samples.pub.accountNumber);
+    user.should.have.property('org_id', samples.pub.orgId);
     user.should.have.property('email', samples.pub.email);
     user.should.have.property('locale', 'en_US');
     user.should.have.property('is_org_admin');
     user.should.have.property('is_internal');
-    user.should.have.property('sso_username', samples.pub.sso_username);
+    user.should.have.property('sso_username', samples.pub.ssoUsername);
 };
 
 describe('Unit Tests:', () => {
