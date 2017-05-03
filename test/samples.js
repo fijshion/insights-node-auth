@@ -24,6 +24,14 @@ const pub = {
 
 module.exports.pub = pub;
 
+module.exports.certUserObject = {
+    oracleCustomerNumber: Number(pub.accountNumber),
+    displayName: pub.orgId,
+    id: '8a85f9812e1deadbeef2134',
+    href: `/owners/${pub.orgId}`,
+    key: pub.orgId
+};
+
 module.exports.smwBasicUserObject = {
     roles: [
         { group: 'cloud_access_1', roles: [ 'ADMIN' ] },

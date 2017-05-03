@@ -19,6 +19,47 @@ funcs.validateUser = (user) => {
 };
 
 describe('Unit Tests:', () => {
+    describe('cert', () => {
+        let mechanism;
+
+        beforeEach(() => {
+            // get a new one each time an it is run
+            mechanism = new auth.cert();
+        });
+
+        describe('buildUserObject', () => {
+            const getInput = (override) => {
+                return Object.assign(samples.certUserObject, override);
+            };
+
+            const validateCertUser = (userObject) => {
+                userObject.should.have.property('account_number', samples.pub.accountNumber);
+                userObject.should.have.property('org_id', samples.pub.orgId);
+                userObject.should.have.property('is_org_admin');
+                userObject.should.have.property('is_internal');
+                userObject.should.have.property('sso_username', `cert-system-${samples.pub.accountNumber}`);
+            };
+
+            it('should look like the standard user object', () => {
+                const userObject = mechanism.buildUserObject(getInput());
+                validateCertUser(userObject);
+            });
+
+            it('should handle Strings or Numbers', () => {
+                const input = getInput();
+
+                input.oracleCustomerNumber = String(input.oracleCustomerNumber);
+                let userObject = mechanism.buildUserObject(input);
+                validateCertUser(userObject);
+
+
+                input.oracleCustomerNumber = Number(input.oracleCustomerNumber);
+                userObject = mechanism.buildUserObject(input);
+                validateCertUser(userObject);
+            });
+        });
+    });
+
     describe('strataBasic', () => {
         let mechanism;
 
