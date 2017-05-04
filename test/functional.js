@@ -6,6 +6,7 @@ const request = require('request');
 const q       = require('q');
 const auth    = require('../index');
 const mocks   = require('./mocks.js');
+const cache   = require('../lib/auth/cache');
 const USER    = process.env.TEST_USERNAME;
 const PASS    = process.env.TEST_PASSWORD;
 const funcs   = {};
@@ -150,6 +151,7 @@ describe('Functional Tests:', () => {
                     throw new Error(`TestError: unimplemented req.get(${str})`);
                 };
 
+                cache.test.flushAll();
                 auth.execChain(mocks.app, [auth.smwBasic], deferred);
 
                 return deferred.promise.then((user) => {

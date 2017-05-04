@@ -3,6 +3,7 @@
 require('assert');
 require('should');
 const td      = require('testdouble');
+const mocks   = require('./mocks');
 const samples = require('./samples');
 const request = td.replace('request');
 const auth    = require('../index');
@@ -19,18 +20,32 @@ funcs.validateUser = (user) => {
 };
 
 describe('Unit Tests:', () => {
+    describe('multiple', () => {
+        describe('SmwBasicAuth and StrataBasicAuth', () => {
+            it('should both give the same cache key', () => {
+                mocks.priv.req.get = (str) => {
+                    if (str === 'authorization') {
+                        return 'VGVzdFVzZXI6VGVzdFBhc3M='; // TestUser:TestPass
+                    }
+                    throw new Error(`TestError: unimplemented req.get("${str}")`);
+                };
+
+                const smw    = new auth.smwBasic(mocks.priv.req);
+                const strata = new auth.strataBasic(mocks.priv.req);
+                const smwOutput = smw.getCacheKey(smw.getCreds());
+                const strataOutput = strata.getCacheKey(strata.getCreds());
+
+                smwOutput.should.equal(strataOutput);
+            });
+        });
+    });
+
     describe('smwBasic', () => {
         let mechanism;
 
         beforeEach(() => {
             // get a new one each time an it is run
             mechanism = new auth.smwBasic();
-        });
-
-        describe('getCacheKey', () => {
-            it('should get an hashed cache key', () => {
-                mechanism.getCacheKey('foobar').should.equal('ClAmHr0aOQ/tK/Mm8mc8FFWCpjQtUjIElz0CGTN/gWFqgGmwElh89WNfaSXxtWw2AjDBmyc1AO4BPgMGAb8kJQ==');
-            });
         });
 
         describe('doRemoteCall', () => {
@@ -129,12 +144,6 @@ describe('Unit Tests:', () => {
         beforeEach(() => {
             // get a new one each time an it is run
             mechanism = new auth.strataBasic();
-        });
-
-        describe('getCacheKey', () => {
-            it('should get an hashed cache key', () => {
-                mechanism.getCacheKey('foobar').should.equal('ClAmHr0aOQ/tK/Mm8mc8FFWCpjQtUjIElz0CGTN/gWFqgGmwElh89WNfaSXxtWw2AjDBmyc1AO4BPgMGAb8kJQ==');
-            });
         });
 
         describe('doRemoteCall', () => {
