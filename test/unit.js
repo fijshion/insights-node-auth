@@ -19,6 +19,69 @@ funcs.validateUser = (user) => {
 };
 
 describe('Unit Tests:', () => {
+    describe('smwBasic', () => {
+        let mechanism;
+
+        beforeEach(() => {
+            // get a new one each time an it is run
+            mechanism = new auth.smwBasic();
+        });
+
+        describe('getCacheKey', () => {
+            it('should get an hashed cache key', () => {
+                mechanism.getCacheKey('foobar').should.equal('ClAmHr0aOQ/tK/Mm8mc8FFWCpjQtUjIElz0CGTN/gWFqgGmwElh89WNfaSXxtWw2AjDBmyc1AO4BPgMGAb8kJQ==');
+            });
+        });
+
+        describe('doRemoteCall', () => {
+            it('should call fail() on a non 200 response', (done) => {
+                td.when(request(td.matchers.anything())).thenCallback(false, { statusCode: 500 }, 'test');
+
+                mechanism.fail = (msg) => {
+                    msg.should.equal('Got a bad statusCode from SmwBasicAuth: 500');
+                    done();
+                };
+
+                mechanism.doRemoteCall('fdsafas');
+            });
+
+            it('should call fail() on a reques error', (done) => {
+                td.when(request(td.matchers.anything())).thenCallback('TEST ERROR', { statusCode: 500 }, 'test');
+
+                mechanism.fail = (msg) => {
+                    msg.should.equal('Got a request error SmwBasicAuth: TEST ERROR');
+                    done();
+                };
+
+                mechanism.doRemoteCall('fdsafas');
+            });
+        });
+
+        describe('buildUserObject', () => {
+            const getInput = (override) => {
+                return Object.assign(samples.smwBasicUserObject, override);
+            };
+
+            it('should look like the standard user object', () => {
+                const userObject = mechanism.buildUserObject(getInput());
+                funcs.validateUser(userObject);
+                userObject.should.have.property('is_active', true);
+                userObject.should.have.property('is_org_admin', true);
+                userObject.should.have.property('is_internal', true);
+            });
+
+            it('should detect the absence of the internal and org admin roles', () => {
+                const userObject = mechanism.buildUserObject(getInput({
+                    roles: []
+                }));
+                funcs.validateUser(userObject);
+                userObject.should.have.property('is_active', true);
+                userObject.should.have.property('is_org_admin', false);
+                userObject.should.have.property('is_internal', false);
+            });
+        });
+    });
+
     describe('cert', () => {
         let mechanism;
 
@@ -111,7 +174,7 @@ describe('Unit Tests:', () => {
                 userObject.should.have.property('is_internal', true);
             });
 
-            it('should detect the abcense of the internal role', () => {
+            it('should detect the absence of the internal role', () => {
                 const userObject = mechanism.buildUserObject(getInput({
                     rights: {
                         right: [
