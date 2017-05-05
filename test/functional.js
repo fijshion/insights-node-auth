@@ -1,11 +1,11 @@
-/*global require, process, describe, it, before, beforeEach, Buffer*/
+/*global require, process, describe, it, before, afterEach, beforeEach Buffer*/
 
 require('assert');
 require('should');
 const request = require('request');
 const q       = require('q');
 const auth    = require('../index');
-const mocks   = require('./mocks.js');
+const Mocks   = require('./mocks.js');
 const cache   = require('../lib/auth/cache');
 const USER    = process.env.TEST_USERNAME;
 const PASS    = process.env.TEST_PASSWORD;
@@ -31,16 +31,48 @@ funcs.validateUser = (user) => {
 
 describe('Functional Tests:', () => {
     describe('execChain', () => {
-        beforeEach(() => {
-            delete mocks.priv.req.authorized;
+        let mocks  = Mocks.getMocks();
+        let rh_jwt;
+
+        before((done) => {
+            const opts = {
+                url: 'https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token',
+                form: {
+                    grant_type: 'password',
+                    client_id:  'customer-portal',
+                    username:   USER,
+                    password:   PASS
+                }
+            };
+            request.post(opts, (err, res, body) => {
+                if (err) { console.err(err); return; }
+                rh_jwt = JSON.parse(body).access_token;
+                done();
+            });
+        });
+
+        afterEach(() => {
+            mocks = Mocks.getMocks();
+        });
+
+        describe('multiple', function () {
+            it('should fall through various modules until it hits one that works', () => {
+                const deferred = q.defer();
+                mocks.addCookie('rh_jwt', rh_jwt);
+                auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
+                return deferred.promise.then((user) => {
+                    funcs.validateUser(user);
+                    user.should.have.property('cachehit', false);
+                });
+            });
         });
 
         describe('systemid', function () {
             it('should return a valid user object when valid creds are passed in', () => {
                 const deferred = q.defer();
 
-                mocks.priv.req.headers = {};
-                mocks.priv.req.headers[process.env.SYSTEMIDAUTH_HEADER] = process.env.TEST_SYSTEMID;
+                mocks.req.headers = {};
+                mocks.req.headers[process.env.SYSTEMIDAUTH_HEADER] = process.env.TEST_SYSTEMID;
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.systemid], deferred);
 
@@ -60,10 +92,10 @@ describe('Functional Tests:', () => {
             it('should return a valid user object when valid creds are passed in', () => {
                 const deferred = q.defer();
 
-                mocks.priv.req.headers = {};
-                mocks.priv.req.headers[process.env.CERTAUTH_HOSTHEADER] = 'cert-api.access.redhat.com';
-                mocks.priv.req.headers[process.env.CERTAUTH_COMMONNAMEHEADER] = process.env.TEST_COMMON_NAME;
-                mocks.priv.req.headers[process.env.CERTAUTH_ISSUERHEADER] = process.env.CERTAUTH_TRUSTEDISSUER;
+                mocks.req.headers = {};
+                mocks.req.headers[process.env.CERTAUTH_HOSTHEADER] = 'cert-api.access.redhat.com';
+                mocks.req.headers[process.env.CERTAUTH_COMMONNAMEHEADER] = process.env.TEST_COMMON_NAME;
+                mocks.req.headers[process.env.CERTAUTH_ISSUERHEADER] = process.env.CERTAUTH_TRUSTEDISSUER;
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.cert], deferred);
 
@@ -84,7 +116,7 @@ describe('Functional Tests:', () => {
             it('should fail when invalid creds are passed in', (done) => {
                 const deferred = q.defer();
 
-                mocks.priv.req.get = (str) => {
+                mocks.req.get = (str) => {
                     if (str === 'authorization') {
                         return 'Basic aW52YWxpZAo=';
                     }
@@ -104,7 +136,7 @@ describe('Functional Tests:', () => {
             it('should return a valid user object when valid creds are passed in', () => {
                 const deferred = q.defer();
 
-                mocks.priv.req.get = (str) => {
+                mocks.req.get = (str) => {
                     if (str === 'authorization') {
                         return 'Basic ' + new Buffer(`${USER}:${PASS}`).toString('base64');
                     }
@@ -124,7 +156,7 @@ describe('Functional Tests:', () => {
             it('should fail when invalid creds are passed in', (done) => {
                 const deferred = q.defer();
 
-                mocks.priv.req.get = (str) => {
+                mocks.req.get = (str) => {
                     if (str === 'authorization') {
                         return 'Basic aW52YWxpZAo=';
                     }
@@ -144,7 +176,7 @@ describe('Functional Tests:', () => {
             it('should return a valid user object when valid creds are passed in', () => {
                 const deferred = q.defer();
 
-                mocks.priv.req.get = (str) => {
+                mocks.req.get = (str) => {
                     if (str === 'authorization') {
                         return 'Basic ' + new Buffer(`${USER}:${PASS}`).toString('base64');
                     }
@@ -162,44 +194,33 @@ describe('Functional Tests:', () => {
         });
 
         describe('keycloakJwt', function() {
-            const opts = {
-                url: 'https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token',
-                form: {
-                    grant_type: 'password',
-                    client_id:  'customer-portal',
-                    username:   USER,
-                    password:   PASS
-                }
-            };
-
-            before((done) => {
-                this.timeout(10 * 1000);
-                request.post(opts, (err, res, body) => {
-                    if (err) { console.err(err); return; }
-                    mocks.addCookie('rh_jwt', JSON.parse(body).access_token);
-                    done();
-                });
+            beforeEach(() => {
+                mocks.addCookie('rh_jwt', rh_jwt);
             });
 
             it('should return a valid user object when valid creds are passed in', () => {
                 const deferred = q.defer();
                 auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
                 return deferred.promise.then((user) => {
-                    funcs.validateUser(user);
+                    mocks.addCookie('rh_jwt', rh_jwt);
                     user.should.have.property('cachehit', false);
                 });
             });
 
             it('should never cache a JWT hit', () => {
                 const deferred = q.defer();
-
-                delete mocks.priv.req.authorized;
+                const innerDeferred = q.defer();
                 auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
-
-                return deferred.promise.then((user) => {
-                    funcs.validateUser(user);
-                    user.should.have.property('cachehit', false);
+                deferred.promise.then(() => {
+                    mocks = Mocks.getMocks();
+                    mocks.addCookie('rh_jwt', rh_jwt);
+                    auth.execChain(mocks.app, [auth.keycloakJwt], innerDeferred);
+                    innerDeferred.promise.then((user) => {
+                        funcs.validateUser(user);
+                        user.should.have.property('cachehit', false);
+                    });
                 });
+                return innerDeferred.promise;
             });
         });
     });

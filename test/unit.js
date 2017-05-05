@@ -3,7 +3,7 @@
 require('assert');
 require('should');
 const td      = require('testdouble');
-const mocks   = require('./mocks');
+const Mocks   = require('./mocks');
 const samples = require('./samples');
 const request = td.replace('request');
 const auth    = require('../index');
@@ -23,15 +23,16 @@ describe('Unit Tests:', () => {
     describe('multiple', () => {
         describe('SmwBasicAuth and StrataBasicAuth', () => {
             it('should both give the same cache key', () => {
-                mocks.priv.req.get = (str) => {
+                const mocks = Mocks.getMocks();
+                mocks.req.get = (str) => {
                     if (str === 'authorization') {
                         return 'VGVzdFVzZXI6VGVzdFBhc3M='; // TestUser:TestPass
                     }
                     throw new Error(`TestError: unimplemented req.get("${str}")`);
                 };
 
-                const smw    = new auth.smwBasic(mocks.priv.req);
-                const strata = new auth.strataBasic(mocks.priv.req);
+                const smw    = new auth.smwBasic(mocks.req);
+                const strata = new auth.strataBasic(mocks.req);
                 const smwOutput = smw.getCacheKey(smw.getCreds());
                 const strataOutput = strata.getCacheKey(strata.getCreds());
 
