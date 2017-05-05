@@ -34,7 +34,8 @@ describe('Functional Tests:', () => {
         let mocks  = Mocks.getMocks();
         let rh_jwt;
 
-        before((done) => {
+        before(function (done) {
+            this.timeout(10 * 1000);
             const opts = {
                 url: 'https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token',
                 form: {
@@ -59,9 +60,19 @@ describe('Functional Tests:', () => {
             it('should fall through various modules until it hits one that works', () => {
                 const deferred = q.defer();
                 mocks.addCookie('rh_jwt', rh_jwt);
-                auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
+                mocks.req.headers = {};
+                mocks.req.get = (str) => {
+                    if (str === 'authorization') {
+                        return false;
+                    }
+                    throw new Error(`TestError: unimplemented req.get("${str}")`);
+                };
+
+                auth.execChain(mocks.app, [auth.smwBasic, auth.cert, auth.systemid, auth.keycloakJwt], deferred);
+
                 return deferred.promise.then((user) => {
                     funcs.validateUser(user);
+                    user.should.have.property('mechanism', auth.keycloakJwt.name);
                     user.should.have.property('cachehit', false);
                 });
             });
