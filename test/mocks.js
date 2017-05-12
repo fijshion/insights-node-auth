@@ -10,10 +10,9 @@ module.exports.getMocks = () => {
 
     priv.res = {
         end: () => {},
+        json: () => {},
         status: () => {
-            return {
-                json: () => {}
-            };
+            return priv.res;
         }
     };
 

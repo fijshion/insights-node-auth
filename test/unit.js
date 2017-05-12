@@ -1,7 +1,7 @@
 /*global require, process, describe, it, beforeEach*/
 
 require('assert');
-require('should');
+const should  = require('should');
 const td      = require('testdouble');
 const Mocks   = require('./mocks');
 const samples = require('./samples');
@@ -58,6 +58,66 @@ describe('Unit Tests:', () => {
 
             return fromise;
         };
+
+        it('should fall through mechanisms until one wins', () => {
+            const mocks      = Mocks.getMocks();
+            const deferred   = q.defer();
+            const mechanisms = [];
+
+            for (let i = 0; i < 10; i++) {
+                const mechanism = td.constructor(['tryAuth']);
+                td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise({ is_active: false}));
+                mechanisms.push(mechanism);
+            }
+
+            const passMechanism = td.constructor(['tryAuth']);
+            const passUser = {
+                is_active: true,
+                account_number: 12345
+            };
+
+            mechanisms.push(passMechanism);
+
+            td.when(passMechanism.prototype.tryAuth()).thenReturn(getFromise(passUser));
+
+            auth.execChain(mocks.app, mechanisms, deferred);
+
+            return deferred.promise.then((status) => {
+                mechanisms.forEach((mechanism) => {
+                    td.config({ ignoreWarnings: true });
+                    td.verify(new mechanism().tryAuth(), {times: 1});
+                    td.config({ ignoreWarnings: false });
+                });
+                status.should.equal(passUser);
+            }).catch(() => {
+                throw new Error('We should not reach the promise catch here!');
+            });
+        });
+
+        it('should fall through mechanisms and die if none win', () => {
+            const mocks      = Mocks.getMocks();
+            const deferred   = q.defer();
+            const mechanisms = [];
+
+            for (let i = 0; i < 10; i++) {
+                const mechanism = td.constructor(['tryAuth']);
+                td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise(false));
+                mechanisms.push(mechanism);
+            }
+
+            auth.execChain(mocks.app, mechanisms, deferred);
+
+            return deferred.promise.then(() => {
+                throw new Error('We should not reach the promise then here!');
+            }).catch((status) => {
+                mechanisms.forEach((mechanism) => {
+                    td.config({ ignoreWarnings: true });
+                    td.verify(new mechanism().tryAuth(), {times: 1});
+                    td.config({ ignoreWarnings: false });
+                });
+                status.should.equal(401);
+            });
+        });
 
         it('should 401 failed logins or empty users', () => {
             const mocks    = Mocks.getMocks();
