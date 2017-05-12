@@ -10,7 +10,11 @@ module.exports.getMocks = () => {
 
     priv.res = {
         end: () => {},
-        status: () => {}
+        status: () => {
+            return {
+                json: () => {}
+            };
+        }
     };
 
     priv.next = () => { };

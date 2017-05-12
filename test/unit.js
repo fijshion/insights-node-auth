@@ -7,6 +7,7 @@ const Mocks   = require('./mocks');
 const samples = require('./samples');
 const request = td.replace('request');
 const auth    = require('../index');
+const q       = require('bluebird');
 const funcs   = {};
 
 funcs.validateUser = (user) => {
@@ -42,8 +43,50 @@ describe('Unit Tests:', () => {
     });
 
     describe('execChain', () => {
-        describe('it should 401 failed logins or empty users', () => {
-            // auth.execChain([auth.keycloakJwt]);
+        const getFromise = (user) => {
+            const fromise = {
+                then:  (cb) => {
+                    cb({
+                        user: user
+                    });
+                    return fromise;
+                },
+                catch: (cb) => {
+                    cb('false');
+                }
+            };
+
+            return fromise;
+        };
+
+        it('should 401 failed logins or empty users', () => {
+            const mocks    = Mocks.getMocks();
+            const deferred = q.defer();
+            auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
+            return deferred.promise.catch((status) => {
+                status.should.equal(401);
+            });
+        });
+
+        it('should 403 users that are not active', () => {
+            const mocks     = Mocks.getMocks();
+            const deferred  = q.defer();
+            const mechanism = td.constructor(['tryAuth']);
+            td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise({ is_active: false}));
+            auth.execChain(mocks.app, [mechanism], deferred);
+            return deferred.promise.catch((status) => { status.should.equal(403); });
+        });
+
+        it('should 402 users that are not active', () => {
+            const mocks     = Mocks.getMocks();
+            const deferred  = q.defer();
+            const mechanism = td.constructor(['tryAuth']);
+            td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise({
+                is_active: true,
+                account_number: 'null'
+            }));
+            auth.execChain(mocks.app, [mechanism], deferred);
+            return deferred.promise.catch((status) => { status.should.equal(402); });
         });
     });
 
