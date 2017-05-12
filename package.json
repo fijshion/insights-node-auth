@@ -21,6 +21,7 @@
   "homepage": "https://github.com/RedHatInsights/insights-node-auth#readme",
   "dependencies": {
     "basic-auth": "^1.1.0",
+    "bluebird": "2.10.0",
     "debug": "^2.6.4",
     "jsonwebtoken": "^7.4.0",
     "lodash": "^4.17.4",

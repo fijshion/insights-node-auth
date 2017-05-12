@@ -3,7 +3,7 @@
 require('assert');
 require('should');
 const request = require('request');
-const q       = require('q');
+const q       = require('bluebird');
 const auth    = require('../index');
 const Mocks   = require('./mocks.js');
 const cache   = require('../lib/auth/cache');

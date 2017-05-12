@@ -41,6 +41,12 @@ describe('Unit Tests:', () => {
         });
     });
 
+    describe('execChain', () => {
+        describe('it should 401 failed logins or empty users', () => {
+            // auth.execChain([auth.keycloakJwt]);
+        });
+    });
+
     describe('smwBasic', () => {
         let mechanism;
 
