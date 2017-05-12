@@ -1,0 +1,16 @@
+language: node_js
+node_js:
+  - "6"
+
+env:
+  - >
+    SYSTEMIDAUTH_HEADER="x-rh-systemid"
+    SYSTEMIDAUTH_URL="http://scriptsvip.rhn.prod.ext.phx2.redhat.com/REDHAT-XMLRPC"
+    SYSTEMIDAUTH_METHOD="information.getOracleAccountNumber"
+    CERTAUTH_COMMONNAMEHEADER="x-foo"
+    CERTAUTH_ISSUERHEADER="x-bar"
+    CERTAUTH_HOSTHEADER="x-baz"
+    CERTAUTH_TRUSTEDHOST="cert-api.access.redhat.com"
+    CERTAUTH_TRUSTEDISSUER="Hiya O_o I am Red Hat"
+    CERTAUTH_CANDLEPINFINDOWNERURL="NULL"
+
