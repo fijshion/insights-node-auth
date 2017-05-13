@@ -5,7 +5,7 @@ node_js:
 env:
   - >
     SYSTEMIDAUTH_HEADER="x-rh-systemid"
-    SYSTEMIDAUTH_URL="http://scriptsvip.rhn.prod.ext.phx2.redhat.com/REDHAT-XMLRPC"
+    SYSTEMIDAUTH_URL="http://example.com"
     SYSTEMIDAUTH_METHOD="information.getOracleAccountNumber"
     CERTAUTH_COMMONNAMEHEADER="x-foo"
     CERTAUTH_ISSUERHEADER="x-bar"
