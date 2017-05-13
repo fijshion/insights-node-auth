@@ -1,7 +1,7 @@
 /*global require, process, describe, it, beforeEach*/
 
 require('assert');
-const should  = require('should');
+require('should');
 const td      = require('testdouble');
 const Mocks   = require('./mocks');
 const samples = require('./samples');
@@ -43,6 +43,7 @@ describe('Unit Tests:', () => {
     });
 
     describe('execChain', () => {
+
         const getFromise = (user) => {
             const fromise = {
                 then:  (cb) => {
@@ -59,16 +60,22 @@ describe('Unit Tests:', () => {
             return fromise;
         };
 
-        it('should fall through mechanisms until one wins', () => {
-            const mocks      = Mocks.getMocks();
-            const deferred   = q.defer();
-            const mechanisms = [];
-
-            for (let i = 0; i < 10; i++) {
+        const addFailing = (arr, num) => {
+            for (let i = 0; i < num; i++) {
                 const mechanism = td.constructor(['tryAuth']);
-                td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise({ is_active: false}));
-                mechanisms.push(mechanism);
+                td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise(false));
+                arr.push(mechanism);
             }
+        };
+
+        it('should fall through mechanisms until one wins', () => {
+            const mocks            = Mocks.getMocks();
+            const deferred         = q.defer();
+            const beforeMechanisms = [];
+            const afterMechanisms  = [];
+
+            addFailing(beforeMechanisms, 10);
+            addFailing(afterMechanisms, 10);
 
             const passMechanism = td.constructor(['tryAuth']);
             const passUser = {
@@ -76,21 +83,22 @@ describe('Unit Tests:', () => {
                 account_number: 12345
             };
 
-            mechanisms.push(passMechanism);
-
+            beforeMechanisms.push(passMechanism);
             td.when(passMechanism.prototype.tryAuth()).thenReturn(getFromise(passUser));
+            passMechanism.prototype.__defineGetter__("name", function() { return 'FooBar'; });
 
-            auth.execChain(mocks.app, mechanisms, deferred);
+            auth.execChain(mocks.app, beforeMechanisms.concat(afterMechanisms), deferred);
+            mocks.next(); // start the app
 
-            return deferred.promise.then((status) => {
-                mechanisms.forEach((mechanism) => {
-                    td.config({ ignoreWarnings: true });
-                    td.verify(new mechanism().tryAuth(), {times: 1});
-                    td.config({ ignoreWarnings: false });
-                });
-                status.should.equal(passUser);
-            }).catch(() => {
-                throw new Error('We should not reach the promise catch here!');
+            return deferred.promise.then((user) => {
+                td.config({ ignoreWarnings: true });
+                beforeMechanisms.forEach((mechanism) => { td.verify(new mechanism().tryAuth(), {times: 1}); });
+                afterMechanisms.forEach((mechanism) => { td.verify(new mechanism().tryAuth(), {times: 1}); });
+                td.config({ ignoreWarnings: false });
+                user.should.equal(passUser);
+                user.mechanism.should.equal('FooBar');
+            }).catch((e) => {
+                throw new Error('We should not reach the promise catch here! ' + e);
             });
         });
 
@@ -99,13 +107,9 @@ describe('Unit Tests:', () => {
             const deferred   = q.defer();
             const mechanisms = [];
 
-            for (let i = 0; i < 10; i++) {
-                const mechanism = td.constructor(['tryAuth']);
-                td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise(false));
-                mechanisms.push(mechanism);
-            }
-
+            addFailing(mechanisms, 10);
             auth.execChain(mocks.app, mechanisms, deferred);
+            mocks.next(); // start the app
 
             return deferred.promise.then(() => {
                 throw new Error('We should not reach the promise then here!');
@@ -123,6 +127,7 @@ describe('Unit Tests:', () => {
             const mocks    = Mocks.getMocks();
             const deferred = q.defer();
             auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
+            mocks.next(); // start the app
             return deferred.promise.catch((status) => {
                 status.should.equal(401);
             });
@@ -134,6 +139,7 @@ describe('Unit Tests:', () => {
             const mechanism = td.constructor(['tryAuth']);
             td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise({ is_active: false}));
             auth.execChain(mocks.app, [mechanism], deferred);
+            mocks.next(); // start the app
             return deferred.promise.catch((status) => { status.should.equal(403); });
         });
 
@@ -146,6 +152,7 @@ describe('Unit Tests:', () => {
                 account_number: 'null'
             }));
             auth.execChain(mocks.app, [mechanism], deferred);
+            mocks.next(); // start the app
             return deferred.promise.catch((status) => { status.should.equal(402); });
         });
     });

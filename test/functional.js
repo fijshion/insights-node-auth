@@ -68,7 +68,8 @@ describe('Functional Tests:', () => {
                     throw new Error(`TestError: unimplemented req.get("${str}")`);
                 };
 
-                auth.execChain(mocks.app, [auth.smwBasic, auth.cert, auth.systemid, auth.keycloakJwt], deferred);
+                auth.execChain(mocks.app, [auth.smwBasic, auth.cert, auth.keycloakJwt, auth.systemid], deferred);
+                mocks.next(); // start the app
 
                 return deferred.promise.then((user) => {
                     funcs.validateUser(user);
@@ -86,6 +87,7 @@ describe('Functional Tests:', () => {
                 mocks.req.headers[process.env.SYSTEMIDAUTH_HEADER] = process.env.TEST_SYSTEMID;
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.systemid], deferred);
+                mocks.next(); // start the app
 
                 return deferred.promise.then((user) => {
                     user.should.have.property('account_number', '540155');
@@ -109,6 +111,7 @@ describe('Functional Tests:', () => {
                 mocks.req.headers[process.env.CERTAUTH_ISSUERHEADER] = process.env.CERTAUTH_TRUSTEDISSUER;
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.cert], deferred);
+                mocks.next(); // start the app
 
                 return deferred.promise.then((user) => {
                     user.should.have.property('account_number', '540155');
@@ -135,6 +138,7 @@ describe('Functional Tests:', () => {
                 };
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.strataBasic], deferred);
+                mocks.next(); // start the app
 
                 return deferred.promise.then(() => {
                     done(new Error('got a non 401 when bad credentials were passed in!'));
@@ -155,6 +159,7 @@ describe('Functional Tests:', () => {
                 };
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.strataBasic], deferred);
+                mocks.next(); // start the app
 
                 return deferred.promise.then((user) => {
                     funcs.validateUser(user);
@@ -175,6 +180,7 @@ describe('Functional Tests:', () => {
                 };
 
                 auth.execChain(mocks.app, [auth.smwBasic], deferred);
+                mocks.next(); // start the app
 
                 return deferred.promise.then(() => {
                     done(new Error('got a non 401 when bad credentials were passed in!'));
@@ -195,7 +201,9 @@ describe('Functional Tests:', () => {
                 };
 
                 cache.test.flushAll();
+
                 auth.execChain(mocks.app, [auth.smwBasic], deferred);
+                mocks.next(); // start the app
 
                 return deferred.promise.then((user) => {
                     funcs.validateUser(user);
@@ -212,6 +220,7 @@ describe('Functional Tests:', () => {
             it('should return a valid user object when valid creds are passed in', () => {
                 const deferred = q.defer();
                 auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
+                mocks.next(); // start the app
                 return deferred.promise.then((user) => {
                     mocks.addCookie('rh_jwt', rh_jwt);
                     user.should.have.property('cachehit', false);
@@ -221,11 +230,17 @@ describe('Functional Tests:', () => {
             it('should never cache a JWT hit', () => {
                 const deferred = q.defer();
                 const innerDeferred = q.defer();
+
                 auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
+                mocks.next(); // start the app
+
                 deferred.promise.then(() => {
                     mocks = Mocks.getMocks();
                     mocks.addCookie('rh_jwt', rh_jwt);
+
                     auth.execChain(mocks.app, [auth.keycloakJwt], innerDeferred);
+                    mocks.next(); // start the app
+
                     innerDeferred.promise.then((user) => {
                         funcs.validateUser(user);
                         user.should.have.property('cachehit', false);

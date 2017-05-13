@@ -2,6 +2,7 @@
 
 module.exports.getMocks = () => {
     const priv = {};
+    const uses = [];
 
     priv.req = {
         cookies: { },
@@ -16,10 +17,14 @@ module.exports.getMocks = () => {
         }
     };
 
-    priv.next = () => { };
+    priv.next = () => {
+        uses.shift()(priv.req, priv.res, priv.next);
+    };
 
     priv.app = {
-        use: (cb) => { cb(priv.req, priv.res, priv.next); }
+        use: (cb) => {
+            uses.push(cb);
+        }
     };
 
     return {
