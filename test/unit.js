@@ -68,6 +68,48 @@ describe('Unit Tests:', () => {
             }
         };
 
+        const singleMockUser402Test = (user) => {
+            const mocks     = Mocks.getMocks();
+            const deferred  = q.defer();
+            const mechanism = td.constructor(['tryAuth']);
+            td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise(user));
+            auth.execChain(mocks.app, [mechanism], deferred);
+            mocks.next(); // start the app
+            return deferred.promise.then((user) => {
+                throw new Error('We should not reach the promise then here! ' + user);
+            }).catch((e) => {
+                e.should.equal(402);
+            });
+        };
+
+        it('should 402 when an account_number is \'undefined\'', () => {
+            return singleMockUser402Test({ is_active: true, account_number: 'undefined' });
+        });
+
+        it('should 402 when an account_number is undefined', () => {
+            return singleMockUser402Test({ is_active: true, account_number: undefined });
+        });
+
+        it('should 402 when an account_number is \'false\'', () => {
+            return singleMockUser402Test({ is_active: true, account_number: 'false' });
+        });
+
+        it('should 402 when an account_number is false', () => {
+           return singleMockUser402Test({ is_active: true, account_number: false });
+        });
+
+        it('should 402 when an account_number is \'null\'', () => {
+           return singleMockUser402Test({ is_active: true, account_number: 'null' });
+        });
+
+        it('should 402 when an account_number is null', () => {
+            return singleMockUser402Test({ is_active: true, account_number: null });
+        });
+
+        it('should 402 when an account_number contains alpha', () => {
+            return singleMockUser402Test({ is_active: true, account_number: '123edf3' });
+        });
+
         it('should fall through mechanisms until one wins', () => {
             const mocks            = Mocks.getMocks();
             const deferred         = q.defer();
@@ -93,7 +135,7 @@ describe('Unit Tests:', () => {
             return deferred.promise.then((user) => {
                 td.config({ ignoreWarnings: true });
                 beforeMechanisms.forEach((mechanism) => { td.verify(new mechanism().tryAuth(), {times: 1}); });
-                afterMechanisms.forEach((mechanism) => { td.verify(new mechanism().tryAuth(), {times: 1}); });
+                afterMechanisms.forEach((mechanism)  => { td.verify(new mechanism().tryAuth(), {times: 1}); });
                 td.config({ ignoreWarnings: false });
                 user.should.equal(passUser);
                 user.mechanism.should.equal('FooBar');

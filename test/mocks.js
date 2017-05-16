@@ -18,7 +18,9 @@ module.exports.getMocks = () => {
     };
 
     priv.next = () => {
-        uses.shift()(priv.req, priv.res, priv.next);
+        if (uses.length > 0) {
+            uses.shift()(priv.req, priv.res, priv.next);
+        }
     };
 
     priv.app = {
