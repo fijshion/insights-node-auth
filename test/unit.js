@@ -68,7 +68,7 @@ describe('Unit Tests:', () => {
             }
         };
 
-        const singleMockUser402Test = (user) => {
+        const singleMockUserFailTest = (code, user) => {
             const mocks     = Mocks.getMocks();
             const deferred  = q.defer();
             const mechanism = td.constructor(['tryAuth']);
@@ -78,36 +78,52 @@ describe('Unit Tests:', () => {
             return deferred.promise.then((user) => {
                 throw new Error('We should not reach the promise then here! ' + user);
             }).catch((e) => {
-                e.should.equal(402);
+                e.should.equal(code);
             });
         };
 
+        it('should fail the unexpected', () => {
+            return singleMockUserFailTest(403, 'This is a test');
+        });
+
+        it('should 401 failed logins', () => {
+            return singleMockUserFailTest(401, false);
+        });
+
+        it('should 401 a null user', () => {
+            return singleMockUserFailTest(401, null);
+        });
+
+        it('should 403 users that are not active', () => {
+            return singleMockUserFailTest(403, { is_active: false, account_number: 12345 });
+        });
+
         it('should 402 when an account_number is \'undefined\'', () => {
-            return singleMockUser402Test({ is_active: true, account_number: 'undefined' });
+            return singleMockUserFailTest(402, { is_active: true, account_number: 'undefined' });
         });
 
         it('should 402 when an account_number is undefined', () => {
-            return singleMockUser402Test({ is_active: true, account_number: undefined });
+            return singleMockUserFailTest(402, { is_active: true, account_number: undefined });
         });
 
         it('should 402 when an account_number is \'false\'', () => {
-            return singleMockUser402Test({ is_active: true, account_number: 'false' });
+            return singleMockUserFailTest(402, { is_active: true, account_number: 'false' });
         });
 
         it('should 402 when an account_number is false', () => {
-           return singleMockUser402Test({ is_active: true, account_number: false });
+            return singleMockUserFailTest(402, { is_active: true, account_number: false });
         });
 
         it('should 402 when an account_number is \'null\'', () => {
-           return singleMockUser402Test({ is_active: true, account_number: 'null' });
+            return singleMockUserFailTest(402, { is_active: true, account_number: 'null' });
         });
 
         it('should 402 when an account_number is null', () => {
-            return singleMockUser402Test({ is_active: true, account_number: null });
+            return singleMockUserFailTest(402, { is_active: true, account_number: null });
         });
 
         it('should 402 when an account_number contains alpha', () => {
-            return singleMockUser402Test({ is_active: true, account_number: '123edf3' });
+            return singleMockUserFailTest(402, { is_active: true, account_number: '123edf3' });
         });
 
         it('should fall through mechanisms until one wins', () => {
@@ -163,39 +179,6 @@ describe('Unit Tests:', () => {
                 });
                 status.should.equal(401);
             });
-        });
-
-        it('should 401 failed logins or empty users', () => {
-            const mocks    = Mocks.getMocks();
-            const deferred = q.defer();
-            auth.execChain(mocks.app, [auth.keycloakJwt], deferred);
-            mocks.next(); // start the app
-            return deferred.promise.catch((status) => {
-                status.should.equal(401);
-            });
-        });
-
-        it('should 403 users that are not active', () => {
-            const mocks     = Mocks.getMocks();
-            const deferred  = q.defer();
-            const mechanism = td.constructor(['tryAuth']);
-            td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise({ is_active: false}));
-            auth.execChain(mocks.app, [mechanism], deferred);
-            mocks.next(); // start the app
-            return deferred.promise.catch((status) => { status.should.equal(403); });
-        });
-
-        it('should 402 users that are not active', () => {
-            const mocks     = Mocks.getMocks();
-            const deferred  = q.defer();
-            const mechanism = td.constructor(['tryAuth']);
-            td.when(mechanism.prototype.tryAuth()).thenReturn(getFromise({
-                is_active: true,
-                account_number: 'null'
-            }));
-            auth.execChain(mocks.app, [mechanism], deferred);
-            mocks.next(); // start the app
-            return deferred.promise.catch((status) => { status.should.equal(402); });
         });
     });
 

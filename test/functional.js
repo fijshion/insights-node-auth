@@ -209,7 +209,7 @@ describe('Functional Tests:', () => {
                     funcs.validateUser(user);
                     user.should.have.property('cachehit', false);
                 });
-            }).timeout(5 * 1000);
+            }).timeout(10 * 1000);
         });
 
         describe('keycloakJwt', function() {
