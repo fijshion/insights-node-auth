@@ -6,7 +6,7 @@ module.exports.getMocks = () => {
 
     priv.req = {
         cookies: { },
-        get: (str) => { throw new Error(`TestError: unimplemented req.get("${str}")`); }
+        get: () => { return undefined; }
     };
 
     priv.res = {

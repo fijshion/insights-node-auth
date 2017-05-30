@@ -65,7 +65,8 @@ describe('Functional Tests:', () => {
                     if (str === 'authorization') {
                         return false;
                     }
-                    throw new Error(`TestError: unimplemented req.get("${str}")`);
+
+                    return undefined;
                 };
 
                 auth.execChain(mocks.app, [auth.smwBasic, auth.cert, auth.keycloakJwt, auth.systemid], deferred);
@@ -134,7 +135,8 @@ describe('Functional Tests:', () => {
                     if (str === 'authorization') {
                         return 'Basic aW52YWxpZAo=';
                     }
-                    throw new Error(`TestError: unimplemented req.get(${str})`);
+
+                    return undefined;
                 };
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.strataBasic], deferred);
@@ -155,7 +157,8 @@ describe('Functional Tests:', () => {
                     if (str === 'authorization') {
                         return 'Basic ' + new Buffer(`${USER}:${PASS}`).toString('base64');
                     }
-                    throw new Error(`TestError: unimplemented req.get(${str})`);
+
+                    return undefined;
                 };
 
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.strataBasic], deferred);
@@ -176,7 +179,8 @@ describe('Functional Tests:', () => {
                     if (str === 'authorization') {
                         return 'Basic aW52YWxpZAo=';
                     }
-                    throw new Error(`TestError: unimplemented req.get(${str})`);
+
+                    return undefined;
                 };
 
                 auth.execChain(mocks.app, [auth.smwBasic], deferred);
@@ -197,7 +201,8 @@ describe('Functional Tests:', () => {
                     if (str === 'authorization') {
                         return 'Basic ' + new Buffer(`${USER}:${PASS}`).toString('base64');
                     }
-                    throw new Error(`TestError: unimplemented req.get(${str})`);
+
+                    return undefined;
                 };
 
                 cache.test.flushAll();
@@ -210,6 +215,51 @@ describe('Functional Tests:', () => {
                     user.should.have.property('cachehit', false);
                 });
             }).timeout(10 * 1000);
+
+            it('should return a *cached* valid user object when valid creds are passed in', () => {
+                const deferred    = q.defer();
+
+                mocks.req.get = (str) => {
+                    if (str === 'authorization') {
+                        return 'Basic ' + new Buffer(`${USER}:${PASS}`).toString('base64');
+                    }
+
+                    return undefined;
+                };
+
+                auth.execChain(mocks.app, [auth.smwBasic], deferred);
+                mocks.next(); // start the app
+
+                return deferred.promise.then((user) => {
+                    funcs.validateUser(user);
+                    user.should.have.property('cachehit', true);
+                });
+            }).timeout(100);
+
+            it('should skip cache when valid creds are passed in and the skip header is present', () => {
+                const deferred    = q.defer();
+
+                mocks.req.get = (str) => {
+                    if (str === 'authorization') {
+                        return 'Basic ' + new Buffer(`${USER}:${PASS}`).toString('base64');
+                    }
+
+                    if (str === 'x-rh-shouldauthcache') {
+                        return 'false';
+                    }
+
+                    return undefined;
+                };
+
+                auth.execChain(mocks.app, [auth.smwBasic], deferred);
+                mocks.next(); // start the app
+
+                return deferred.promise.then((user) => {
+                    funcs.validateUser(user);
+                    user.should.have.property('cachehit', false);
+                });
+            }).timeout(10 * 1000);
+
         });
 
         describe('keycloakJwt', function() {
