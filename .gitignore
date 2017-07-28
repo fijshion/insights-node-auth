@@ -36,6 +36,14 @@ jspm_packages
 # Optional REPL history
 .node_repl_history
 
+#vim stuff
+*.swp
+*.swo
+Session.vim
+tags
+.agignore
+.vimrc
+.tern-project
 
 test/env.sh
 test.js
