@@ -107,7 +107,7 @@ describe('Functional Tests:', () => {
                 const deferred = q.defer();
 
                 mocks.req.headers = {};
-                mocks.req.headers[process.env.CERTAUTH_HOSTHEADER] = 'cert-api.access.redhat.com';
+                mocks.req.headers[process.env.CERTAUTH_PROXYPROOFHEADER] = process.env.CERTAUTH_PROXYPROOF;
                 mocks.req.headers[process.env.CERTAUTH_COMMONNAMEHEADER] = process.env.TEST_COMMON_NAME;
                 mocks.req.headers[process.env.CERTAUTH_ISSUERHEADER] = process.env.CERTAUTH_TRUSTEDISSUER;
 
@@ -142,7 +142,7 @@ describe('Functional Tests:', () => {
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.strataBasic], deferred);
                 mocks.next(); // start the app
 
-                return deferred.promise.then(() => {
+                deferred.promise.then(() => {
                     done(new Error('got a non 401 when bad credentials were passed in!'));
                 }).catch((status) => {
                     status.should.equal(401);
@@ -186,7 +186,7 @@ describe('Functional Tests:', () => {
                 auth.execChain(mocks.app, [auth.smwBasic], deferred);
                 mocks.next(); // start the app
 
-                return deferred.promise.then(() => {
+                deferred.promise.then(() => {
                     done(new Error('got a non 401 when bad credentials were passed in!'));
                 }).catch((status) => {
                     status.should.equal(401);
