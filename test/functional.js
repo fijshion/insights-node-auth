@@ -87,6 +87,9 @@ describe('Functional Tests:', () => {
                 mocks.req.headers = {};
                 mocks.req.headers[process.env.SYSTEMIDAUTH_HEADER] = process.env.TEST_SYSTEMID;
 
+                console.log('**** mocks.req.headers[process.env.SYSTEMIDAUTH_HEADER]');
+                console.log(mocks.req.headers[process.env.SYSTEMIDAUTH_HEADER]);
+
                 auth.execChain(mocks.app, [auth.keycloakJwt,  auth.systemid], deferred);
                 mocks.next(); // start the app
 
